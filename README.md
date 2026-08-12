@@ -1,66 +1,99 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+A. Tabel categories (Game / Layanan)
+Menyimpan daftar game atau produk layanan yang tersedia.
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Kolom	Tipe Data	Keterangan
+id	BigInt (PK)	Primary Key
+name	VarChar(100)	Nama Game (contoh: Mobile Legends)
+slug	VarChar(100)	URL friendly (mobile-legends)
+publisher	VarChar(100)	Penerbit (contoh: Moonton)
+target_field_type	VarChar(50)	Jenis input user (contoh: id_only, id_zone)
+thumbnail	VarChar(255)	URL/Path gambar game
+status	Enum	Status aktif (active, inactive)
+B. Tabel products (Item / Nominal Top-Up)
+Menyimpan nominal atau item yang dijual untuk tiap game.
 
-## About Laravel
+Kolom	Tipe Data	Keterangan
+id	BigInt (PK)	Primary Key
+category_id	BigInt (FK)	Relasi ke categories.id
+name	VarChar(100)	Nama Item (contoh: 86 Diamonds)
+price	Decimal(12,2)	Harga jual ke konsumen
+cost_price	Decimal(12,2)	Harga modal (dari provider API)
+provider_code	VarChar(50)	Kode produk dari provider/supplier API
+status	Enum	Status ketersediaan (available, empty)
+C. Tabel payment_methods (Metode Pembayaran)
+Menyimpan metode pembayaran yang didukung (QRIS, VA, E-Wallet, Retail).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Kolom	Tipe Data	Keterangan
+id	BigInt (PK)	Primary Key
+code	VarChar(50)	Kode metode (contoh: qris, bca_va, gopay)
+name	VarChar(100)	Nama metode (contoh: BCA Virtual Account)
+type	VarChar(50)	Kategori (e-wallet, virtual_account, convenience_store)
+admin_fee	Decimal(10,2)	Biaya admin tambahan
+status	Enum	Status aktif (active, inactive)
+D. Tabel orders / transactions (Transaksi)
+Tabel utama pencatatan setiap proses pembelian.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Kolom	Tipe Data	Keterangan
+id	BigInt (PK)	Primary Key
+invoice_number	VarChar(50)	Nomor Invoice unik (contoh: INV-20260811-001)
+user_id	BigInt (FK)	Relasi ke users.id (Nullable, jika mendukung guest checkout)
+product_id	BigInt (FK)	Relasi ke products.id
+payment_method_id	BigInt (FK)	Relasi ke payment_methods.id
+target_user_id	VarChar(100)	User ID Game pembeli (contoh: 12345678)
+target_zone_id	VarChar(50)	Server ID / Zone ID (opsional, contoh: 2105)
+phone_number	VarChar(20)	Nomor WhatsApp/HP untuk notifikasi
+amount	Decimal(12,2)	Total harga produk + biaya admin
+payment_status	Enum	Status pembayaran (pending, paid, failed, expired)
+processing_status	Enum	Status top-up (processing, success, failed)
+payment_reference	VarChar(100)	Ref / Token dari Payment Gateway (Midtrans/Tripay/dll.)
+created_at	Timestamp	Waktu transaksi dibuat
+E. Tabel users (Pengguna / Pembeli)
+Menyimpan data pembeli terdaftar (jika platform memiliki fitur akun/member).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Kolom	Tipe Data	Keterangan
+id	BigInt (PK)	Primary Key
+name	VarChar(100)	Nama pengguna
+email	VarChar(100)	Email unik
+password	VarChar(255)	Hash password
+role	Enum	Hak akses (admin, customer)
+2. Relasi Antar Tabel (Entity Relationship)
+Relationships yang menghubungkan antar tabel di atas adalah sebagai berikut:
 
-## Learning Laravel
+categories (1) ─── (N) products
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+One-to-Many: Satu game (Category) memiliki banyak nominal/item pilihan (Products).
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+products.category_id merujuk pada categories.id.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+products (1) ─── (N) orders
 
-## Laravel Sponsors
+One-to-Many: Satu jenis item (Product) bisa dibeli di banyak transaksi (Orders).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+orders.product_id merujuk pada products.id.
 
-### Premium Partners
+payment_methods (1) ─── (N) orders
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+One-to-Many: Satu metode pembayaran bisa digunakan pada banyak transaksi (Orders).
 
-## Contributing
+orders.payment_method_id merujuk pada payment_methods.id.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+users (1) ─── (N) orders
 
-## Code of Conduct
+One-to-Many (Optional): Satu akun pengguna bisa memiliki banyak riwayat transaksi.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+orders.user_id merujuk pada users.id (dibuat Nullable agar transaksi tanpa login tetap bisa dilakukan).
 
-## Security Vulnerabilities
+3. Alur Data Transaksi (Workflow Singkat)
+Pembeli memilih Game (categories) dan menentukan Item (products).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Pembeli memasukkan ID Game (target_user_id & target_zone_id) serta memilih Metode Pembayaran (payment_methods).
 
-## License
+Sistem membuat Invoice Baru di tabel orders dengan payment_status = pending.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Setelah pembeli membayar, Payment Gateway memberikan notifikasi (callback) ke sistem:
+
+Status pembayaran berubah menjadi payment_status = paid.
+
+Sistem otomatis menembak API Provider Top-Up.
+
+Jika sukses, processing_status berubah menjadi success.
