@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('payment_methods', function (Blueprint $table) {
             $table->id();
+            $table->string('code', 50)->unique();
+            $table->string('name', 100);
+            $table->string('type', 50); // e-wallet, virtual_account, dll
+            $table->decimal('admin_fee', 10, 2)->default(0);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }
