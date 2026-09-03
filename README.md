@@ -43,6 +43,7 @@ Proyek ini dikembangkan dan dikelola dengan bangga oleh kelompok kami:
 * 🌟 **Abe**
 * 🌟 **Zafran**
 * 🌟 **Raihan**
+* 🌟 **Zulfikar**
 
 ---
 
