@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // <-- Ditambahkan di sini agar bisa diisi saat register/create
     ];
 
     /**
@@ -40,5 +41,6 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed', // Opsional, bisa ditambahkan jika menggunakan Laravel versi baru
     ];
 }
